@@ -1,14 +1,66 @@
 var User = require('../models/user');
+var md5 = require('md5');
+
+
+exports.authenticateUser = function (req, res) {
+    if (req.body.socialId) {
+        User.findOne({ socialId: socialId }, function (err, response) {
+            if (err) {
+                res.json({
+                    status: false,
+                    message: err
+                });
+            }
+            if ((response || []).length === 0) {
+                res.json({
+                    status: false,
+                    message: "Wrong Social Id"
+                });
+            } else {
+                res.json({
+                    status: true,
+                    id: response._id
+                })
+            }
+
+        })
+        return;
+    }
+    var crpyt = md5(req.body.password);
+    var username1 = req.body.username;
+    var password1 = crpyt;
+    User.findOne({ username: username1, password: password1 }, function (err, response) {
+        if (err) {
+            res.json({
+                status: false,
+                message: err
+            });
+        }
+        if ((response || []).length === 0) {
+            res.json({
+                status: false,
+                message: "Wrong Username / Password"
+            });
+        } else {
+            res.json({
+                status: true,
+                id: response._id
+            })
+        }
+
+    })
+};
 
 exports.postUsers = function (req, res) {
     if (req && Object.keys(req.body).length === 4) {
         var user = new User({
             username: req.body.username,
-            email: req.body.email,
+            password: md5(req.body.password),
             name: req.body.name,
-            phone_number: req.body.phone_number,
-            created_at: new Date(),
-            updated_at: ""
+            phoneNumber: req.body.phoneNumber,
+            socialId: req.body.socialId || '',
+            createdDate: new Date(),
+            updatedDate: ""
         });
         user.save(function (err, response) {
             if (err) {
@@ -17,7 +69,7 @@ exports.postUsers = function (req, res) {
             delete response.__v;
             res.json({
                 status: true,
-                body: response
+                body: { id: response._id }
             })
 
         });
@@ -31,6 +83,93 @@ exports.postUsers = function (req, res) {
 
 };
 
+exports.putNotes = function (req, res) {
+    var id = req.params.id;
+    if (req && Object.keys(req.body).length === 1) {
+        User.findOne({ _id: id }, function (err, user) {
+            if (err) {
+                res.json(err);
+            }
+            if (user && req.body && req.body.notes) {
+                var validationFlag = false
+                req.body.notes.map((item) => {
+                    item.id = uuidv4();
+                    item.createdDate = new Date();
+                    if (item.title && item.data) {
+                        user.notes.push(item);
+                    } else {
+                        validationFlag = true
+                    }
+                })
+                if (validationFlag) {
+                    res.status(400);
+                    res.json({
+                        status: false,
+                        message: "Failed to update"
+                    });
+                } else {
+                    user.save(function (err, response) {
+                        if (err) {
+                            res.json(err);
+                        }
+                        res.json({
+                            status: true,
+                            data: response.notes
+                        });
+                    })
+                }
+
+            } else {
+                res.status(400);
+                res.json({
+                    status: false,
+                    message: "Failed to update"
+                });
+            }
+
+        })
+    } else {
+        res.status(400);
+        res.json({
+            status: false,
+            message: "Invalid Data"
+        })
+    }
+
+};
+
+exports.getNotes = function (req, res) {
+    try {
+        var id = req.params.id;
+        User.findOne({ _id: id }, function (err, response) {
+            if (err) {
+                return res.json(req, res, err);
+            }
+            if (response && Object.keys(response).length) {
+                res.json({
+                    status: true,
+                    response: response.notes
+                });
+            } else {
+                res.status(400);
+                res.json({
+                    status: false,
+                    message: "User doesn't exist"
+                });
+            }
+
+        })
+    } catch (error) {
+        res.status(400);
+        res.json({
+            status: false,
+            message: "User doesn't exist"
+        });
+    }
+
+
+};
+
 
 exports.getUsers = function (req, res) {
     console.log(new Date().toUTCString());
@@ -38,10 +177,26 @@ exports.getUsers = function (req, res) {
         if (err) {
             return res.json(req, res, err);
         }
-        res.json({
-            status: true,
-            data: response
-        });
+        if (response && response.length) {
+            updatedData = response.map((item) => {
+                updatedItem = {};
+                updatedItem.username = item.username;
+                updatedItem.name = item.name;
+                updatedItem.phoneNumber = item.phoneNumber;
+                updatedItem.createdDate = item.createdDate;
+                return updatedItem;
+            })
+            res.json({
+                status: true,
+                data: updatedData
+            });
+        } else {
+            res.status(400);
+            res.json({
+                status: false,
+                message: "No User exist"
+            });
+        }
     })
 }
 
@@ -55,14 +210,14 @@ exports.updateUsers = function (req, res) {
         }
         if (user && req.body && req.body.username) {
             var username = req.body.username;
-            var phone_number = req.body.phone_number;
-            var email = req.body.email;
-            var name =  req.body.name;
-            user.email = email;
+            var phoneNumber = req.body.phoneNumber;
+            var password = md5(req.body.password);
+            var name = req.body.name;
+            user.password = password;
             user.name = name;
             user.username = username;
-            user.phone_number = phone_number;
-            user.updated_at = new Date();
+            user.phoneNumber = phoneNumber;
+            user.updatedDate = new Date();
 
             user.save(function (err, response) {
                 if (err) {
@@ -100,6 +255,54 @@ exports.deleteUsers = function (req, res) {
                     status: true,
                 });
             })
+        } else {
+            res.status(400);
+            res.json({
+                status: false,
+                message: "User doesn't exist"
+            });
+        }
+
+    })
+}
+
+
+exports.deleteNote = function (req, res) {
+    var id = req.params.id;
+    var noteId = req.params.noteId
+    User.findOne({ _id: id }, function (err, user) {
+        if (err) {
+            res.json(err);
+        }
+        if (user) {
+            if (user.notes && user.notes.length) {
+                var dataFlag = false;
+                user.notes = user.notes.filter((item) => {
+                    if (item.id === noteId) {
+                        dataFlag = true;
+                        return false
+                    }
+                    return true
+                })
+            }
+            if (dataFlag) {
+                user.save(function (err, response) {
+                    if (err) {
+                        res.json(err);
+                    }
+                    res.json({
+                        status: true,
+                    });
+                })
+            } else {
+                res.status(400);
+                res.json({
+                    status: false,
+                    message: "Note not found"
+                });
+            }
+
+
         } else {
             res.status(400);
             res.json({
@@ -153,3 +356,9 @@ exports.regexsearch = function (req, res) {
 
 
 
+function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}

@@ -5,10 +5,12 @@ var mongoose = require('mongoose');
 var UserSchema = new mongoose.Schema({
     username: {type: String},
     name: {type: String},
-    email: {type: String},
-    phone_number: {type: Number},
-    created_at: {type: Date, default: Date.now},
-    updated_at: Date
+    phoneNumber: {type: Number},
+    password: {type: String},
+    notes:{type: Array},
+    socialId: {type: String},
+    createdDate: {type: Date, default: Date.now},
+    updatedDate: Date
 });
 
 // Export the Mongoose model
