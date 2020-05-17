@@ -5,7 +5,7 @@ var bodyParser = require('body-parser');
 
 // Connect to the MongoDB
 //'mongodb://localhost:27017/test'
-mongoose.connect('mongodb://heroku_mt1mnbdw:kaqfjqj9nihnmspee7ss87ntl@ds127399.mlab.com:27399/heroku_mt1mnbdw/test', { useNewUrlParser: true, useUnifiedTopology: true }).then(() => console.log('DB Connected!'))
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/test', { useNewUrlParser: true, useUnifiedTopology: true }).then(() => console.log('DB Connected!'))
     .catch(err => {
         console.log(`DB Connection Error: ${err.message}`);
     });;
