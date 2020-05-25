@@ -27,9 +27,9 @@ exports.authenticateUser = function (req, res) {
         return;
     }
     var crpyt = md5(req.body.password);
-    var username1 = req.body.username;
-    var password1 = crpyt;
-    User.findOne({ username: username1, password: password1 }, function (err, response) {
+    var requestUsername = req.body.username;
+    var requestPassword = crpyt;
+    User.findOne({ username: requestUsername, password: requestPassword }, function (err, response) {
         if (err) {
             res.json({
                 status: false,
@@ -53,26 +53,45 @@ exports.authenticateUser = function (req, res) {
 
 exports.postUsers = function (req, res) {
     if (req && Object.keys(req.body).length === 4) {
-        var user = new User({
-            username: req.body.username,
-            password: md5(req.body.password),
-            name: req.body.name,
-            phoneNumber: req.body.phoneNumber,
-            socialId: req.body.socialId || '',
-            createdDate: new Date(),
-            updatedDate: ""
-        });
-        user.save(function (err, response) {
+        var requestUsername = req.body.username;
+        User.findOne({ username: requestUsername }, function (err, response) {
             if (err) {
-                return res.json(req, res, err);
+                res.json({
+                    status: false,
+                    message: err
+                });
             }
-            delete response.__v;
-            res.json({
-                status: true,
-                body: { id: response._id }
-            })
+            if ((response || []).length === 0) {
+                var user = new User({
+                    username: req.body.username,
+                    password: md5(req.body.password),
+                    name: req.body.name,
+                    phoneNumber: req.body.phoneNumber,
+                    socialId: req.body.socialId || '',
+                    createdDate: new Date(),
+                    updatedDate: ""
+                });
+                user.save(function (err, response) {
+                    if (err) {
+                        return res.json(req, res, err);
+                    }
+                    delete response.__v;
+                    res.json({
+                        status: true,
+                        body: { id: response._id }
+                    })
 
-        });
+                });
+            } else {
+                res.status(400);
+                res.json({
+                    status: false,
+                    message: "User Already Exists"
+                })
+            }
+
+        })
+
     } else {
         res.status(400);
         res.json({
