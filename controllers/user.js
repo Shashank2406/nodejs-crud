@@ -183,6 +183,7 @@ exports.getNotes = function (req, res) {
         var id = req.params.id;
         if (!/[^a-zA-Z0-9]/.test(id)) {
             User.findOne({ _id: id }, function (err, response) {
+                console.log(response);
                 if (err) {
                     return res.json(req, res, err);
                 }
