@@ -3,6 +3,7 @@ var md5 = require('md5');
 
 
 exports.authenticateUser = function (req, res) {
+    console.log(req);
     if (req.body.socialId) {
         User.findOne({ socialId: socialId }, function (err, response) {
             if (err) {
@@ -180,24 +181,33 @@ exports.putNotes = function (req, res) {
 exports.getNotes = function (req, res) {
     try {
         var id = req.params.id;
-        User.findOne({ _id: id }, function (err, response) {
-            if (err) {
-                return res.json(req, res, err);
-            }
-            if (response && Object.keys(response).length) {
-                res.json({
-                    status: true,
-                    response: response.notes
-                });
-            } else {
-                res.status(400);
-                res.json({
-                    status: false,
-                    message: "User doesn't exist"
-                });
-            }
-
-        })
+        if (!/[^a-zA-Z0-9]/.test(id)) {
+            User.findOne({ _id: id }, function (err, response) {
+                if (err) {
+                    return res.json(req, res, err);
+                }
+                if (response && Object.keys(response).length) {
+                    res.json({
+                        status: true,
+                        response: response.notes
+                    });
+                } else {
+                    res.status(400);
+                    res.json({
+                        status: false,
+                        message: "User doesn't exist"
+                    });
+                }
+    
+            })
+        } else {
+            res.status(400);
+            res.json({
+                status: false,
+                message: "Invalid Params"
+            });
+        }
+       
     } catch (error) {
         res.status(400);
         res.json({
