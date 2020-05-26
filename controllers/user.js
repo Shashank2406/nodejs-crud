@@ -11,17 +11,27 @@ exports.authenticateUser = function (req, res) {
                     message: err
                 });
             }
-            if ((response || []).length === 0) {
+            try {
+                if ((response || []).length === 0) {
+                    res.json({
+                        status: false,
+                        message: "Wrong Social Id"
+                    });
+                } else {
+                    res.json({
+                        status: true,
+                        id: response._id
+                    })
+                }
+            } catch (error) {
+                console.log(error)
+                res.status(400);
                 res.json({
                     status: false,
-                    message: "Wrong Social Id"
+                    message: error
                 });
-            } else {
-                res.json({
-                    status: true,
-                    id: response._id
-                })
             }
+
 
         })
         return;
@@ -36,17 +46,27 @@ exports.authenticateUser = function (req, res) {
                 message: err
             });
         }
-        if ((response || []).length === 0) {
-            res.json({
-                status: false,
-                message: "Wrong Username / Password"
-            });
-        } else {
-            res.json({
-                status: true,
-                id: response._id
-            })
+        try {
+            if ((response || []).length === 0) {
+                res.json({
+                    status: false,
+                    message: "Wrong Username / Password"
+                });
+            } else {
+                res.json({
+                    status: true,
+                    id: response._id
+                })
+            }
+        } catch (error) {
+            console.log(error)
+            res.status(400);
+                res.json({
+                    status: false,
+                    message: error
+                });
         }
+
 
     })
 };
