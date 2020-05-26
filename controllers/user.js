@@ -3,7 +3,6 @@ var md5 = require('md5');
 
 
 exports.authenticateUser = function (req, res) {
-    console.log(req);
     if (req.body.socialId) {
         User.findOne({ socialId: socialId }, function (err, response) {
             if (err) {
@@ -11,6 +10,7 @@ exports.authenticateUser = function (req, res) {
                     status: false,
                     message: err
                 });
+                return
             }
             try {
                 if ((response || []).length === 0) {
@@ -46,6 +46,7 @@ exports.authenticateUser = function (req, res) {
                 status: false,
                 message: err
             });
+            return
         }
         try {
             if ((response || []).length === 0) {
@@ -62,10 +63,10 @@ exports.authenticateUser = function (req, res) {
         } catch (error) {
             console.log(error)
             res.status(400);
-                res.json({
-                    status: false,
-                    message: error
-                });
+            res.json({
+                status: false,
+                message: error
+            });
         }
 
 
@@ -94,7 +95,8 @@ exports.postUsers = function (req, res) {
                 });
                 user.save(function (err, response) {
                     if (err) {
-                        return res.json(req, res, err);
+                        res.json(req, res, err);
+                        return
                     }
                     delete response.__v;
                     res.json({
@@ -129,6 +131,7 @@ exports.putNotes = function (req, res) {
         User.findOne({ _id: id }, function (err, user) {
             if (err) {
                 res.json(err);
+                return
             }
             if (user && req.body && req.body.notes) {
                 var validationFlag = false
@@ -151,6 +154,7 @@ exports.putNotes = function (req, res) {
                     user.save(function (err, response) {
                         if (err) {
                             res.json(err);
+                            return
                         }
                         res.json({
                             status: true,
@@ -183,24 +187,31 @@ exports.getNotes = function (req, res) {
         var id = req.params.id;
         if (!/[^a-zA-Z0-9]/.test(id)) {
             User.findOne({ _id: id }, function (err, response) {
-                console.log(response);
                 if (err) {
-                    return res.json(req, res, err);
+                    res.status(400);
+                    res.json({
+                        status: false,
+                        message: "User doesn't exist"
+                    });
+                    return
                 }
                 if (response && Object.keys(response).length) {
                     res.json({
                         status: true,
                         response: response.notes
                     });
+                    return
                 } else {
                     res.status(400);
                     res.json({
                         status: false,
                         message: "User doesn't exist"
                     });
+                    return
                 }
-    
+
             })
+           
         } else {
             res.status(400);
             res.json({
@@ -208,7 +219,7 @@ exports.getNotes = function (req, res) {
                 message: "Invalid Params"
             });
         }
-       
+
     } catch (error) {
         res.status(400);
         res.json({
@@ -257,6 +268,7 @@ exports.updateUsers = function (req, res) {
     User.findOne({ _id: id }, function (err, user) {
         if (err) {
             res.json(err);
+            return
         }
         if (user && req.body && req.body.username) {
             var username = req.body.username;
@@ -294,6 +306,7 @@ exports.deleteUsers = function (req, res) {
     User.findOne({ _id: id }, function (err, user) {
         if (err) {
             res.json(err);
+            return
         }
 
         if (user) {
@@ -323,6 +336,7 @@ exports.deleteNote = function (req, res) {
     User.findOne({ _id: id }, function (err, user) {
         if (err) {
             res.json(err);
+            return
         }
         if (user) {
             if (user.notes && user.notes.length) {
